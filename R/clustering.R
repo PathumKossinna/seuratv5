@@ -403,6 +403,7 @@ FindClusters.default <- function(
 #' @importFrom methods is
 #'
 #' @param graph.name Name of graph to use for the clustering algorithm
+#' @param cluster.name Name of output clusters
 #'
 #' @rdname FindClusters
 #' @export
@@ -412,6 +413,7 @@ FindClusters.default <- function(
 FindClusters.Seurat <- function(
   object,
   graph.name = NULL,
+  cluster.name = NULL,
   modularity.fxn = 1,
   initial.membership = NULL,
   node.sizes = NULL,
@@ -452,9 +454,18 @@ FindClusters.Seurat <- function(
     verbose = verbose,
     ...
   )
-  colnames(x = clustering.results) <- paste0(graph.name, "_", colnames(x = clustering.results))
-  object <- AddMetaData(object = object, metadata = clustering.results)
-  Idents(object = object) <- colnames(x = clustering.results)[ncol(x = clustering.results)]
+  cluster.name <- cluster.name %||%
+    paste(
+      graph.name,
+      names(x = clustering.results),
+      sep = '_'
+    )
+  names(x = clustering.results) <- cluster.name
+  # object <- AddMetaData(object = object, metadata = clustering.results)
+  # Idents(object = object) <- colnames(x = clustering.results)[ncol(x = clustering.results)]
+  idents.use <- names(x = clustering.results)[ncol(x = clustering.results)]
+  object[[]] <- clustering.results
+  Idents(object = object, replace = TRUE) <- object[[idents.use, drop = TRUE]]
   levels <- levels(x = object)
   levels <- tryCatch(
     expr = as.numeric(x = levels),
@@ -772,9 +783,8 @@ FindNeighbors.Seurat <- function(
     )
   } else {
     assay <- assay %||% DefaultAssay(object = object)
-    data.use <- GetAssay(object = object, assay = assay)
     neighbor.graphs <- FindNeighbors(
-      object = data.use,
+      object = object[[assay]],
       features = features,
       k.param = k.param,
       compute.SNN = compute.SNN,
@@ -1607,6 +1617,10 @@ NNHelper <- function(data, query = data, k, method, cache.index = FALSE, ...) {
       "annoy" = {
         args <- args[intersect(x = names(x = args), y = names(x = formals(fun = AnnoyNN)))]
         do.call(what = 'AnnoyNN', args = args)
+      },
+      "hnsw" = {
+        args <- args[intersect(x = names(x = args), y = names(x = formals(fun = HnswNN)))]
+        do.call(what = 'HnswNN', args = args)
       },
       stop("Invalid method. Please choose one of 'rann', 'annoy'")
     )

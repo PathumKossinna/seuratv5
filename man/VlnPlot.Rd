@@ -9,6 +9,7 @@ VlnPlot(
   features,
   cols = NULL,
   pt.size = NULL,
+  alpha = 1,
   idents = NULL,
   sort = FALSE,
   assay = NULL,
@@ -19,7 +20,8 @@ VlnPlot(
   same.y.lims = FALSE,
   log = FALSE,
   ncol = NULL,
-  slot = "data",
+  slot = deprecated(),
+  layer = "data",
   split.plot = FALSE,
   stack = FALSE,
   combine = TRUE,
@@ -37,7 +39,9 @@ anything that can be retreived by FetchData)}
 
 \item{cols}{Colors to use for plotting}
 
-\item{pt.size}{Point size for geom_violin}
+\item{pt.size}{Point size for points}
+
+\item{alpha}{Alpha value for points}
 
 \item{idents}{Which classes to include in the plot (default is all)}
 
